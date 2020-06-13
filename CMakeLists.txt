@@ -12,7 +12,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-arcs -ftest-coverage")
 
 find_package (Threads REQUIRED)
-add_library(efp STATIC ElasticFrameProtocol.cpp)
+add_library(efp STATIC ElasticFrameProtocol.cpp ElasticFrameProtocol.h ElasticInternal.h)
 add_library(efp_shared SHARED ElasticFrameProtocol.cpp)
 
 file(GLOB unit_tests "${CMAKE_CURRENT_SOURCE_DIR}/unitTests/*.cpp")
