@@ -37,15 +37,14 @@ ElasticFrameProtocolReceiver::ElasticFrameProtocolReceiver(uint32_t bucketTimeou
 
 ElasticFrameProtocolReceiver::~ElasticFrameProtocolReceiver() {
 
-    //We allocated so this cant be a nullptr
-    delete[] mBucketList;
-
     // If our worker is active we need to stop it.
     if (mThreadActive) {
         if (stopReceiver() != ElasticFrameMessages::noError) {
             EFP_LOGGER(true, LOGG_ERROR, "Failed stopping worker thread.")
         }
     }
+    //We allocated so this cant be a nullptr
+    delete[] mBucketList;
     EFP_LOGGER(true, LOGG_NOTIFY, "ElasticFrameProtocol destruct")
 }
 
