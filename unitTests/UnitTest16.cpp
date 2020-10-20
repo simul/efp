@@ -15,7 +15,6 @@
 #include "UnitTest16.h"
 
 void UnitTest16::sendData(const std::vector<uint8_t> &subPacket) {
-
     testDataMtx.lock();
     TestProps currentProps = testData.back();
     testDataMtx.unlock();
@@ -98,7 +97,6 @@ void UnitTest16::sendData(const std::vector<uint8_t> &subPacket) {
 
 void
 UnitTest16::gotData(ElasticFrameProtocolReceiver::pFramePtr &packet) {
-
     testDataMtx.lock();
     bool isLoss = false;
     do {
@@ -131,7 +129,6 @@ UnitTest16::gotData(ElasticFrameProtocolReceiver::pFramePtr &packet) {
     std::cout << " code " << packet->mCode;
     std::cout << std::endl;
     debugPrintMutex.unlock();
-
 }
 
 bool UnitTest16::waitForCompletion() {
@@ -160,7 +157,7 @@ bool UnitTest16::startUnitTest() {
     ElasticFrameMessages result;
     std::vector<uint8_t> mydata;
     uint8_t streamID = 1;
-    myEFPReciever = new(std::nothrow) ElasticFrameProtocolReceiver(5, 2);
+    myEFPReciever = new(std::nothrow) ElasticFrameProtocolReceiver(50, 20);
     myEFPPacker = new(std::nothrow) ElasticFrameProtocolSender(MTU);
     if (myEFPReciever == nullptr || myEFPPacker == nullptr) {
         if (myEFPReciever) delete myEFPReciever;

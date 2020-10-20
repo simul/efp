@@ -17,14 +17,15 @@
 
 char *embedd_me = "This is a embedded string";
 
-uint8_t data[TEST_DATA_SIZE];
+uint8_t test_data[TEST_DATA_SIZE];
 uint64_t efp_object_handle_receive;
 
 int drop_counter = 0;
 int first_frame_broken_counter = 0;
 
-void send_data_callback(const uint8_t *data, size_t size, uint8_t stream_id) {
+int the_context = 123;
 
+void send_data_callback(const uint8_t *data, size_t size, uint8_t stream_id, void* ctx) {
     drop_counter++;
     if (drop_counter == 5) {
         //Drop the ^ fragment
@@ -39,10 +40,11 @@ void send_data_callback(const uint8_t *data, size_t size, uint8_t stream_id) {
     }
 }
 
-void receive_embedded_data_callback(uint8_t *data, size_t size, uint8_t data_type, uint64_t pts) {
+void receive_embedded_data_callback(uint8_t *data, size_t size, uint8_t data_type, uint64_t pts, void* ctx) {
     printf("Got embedded data: %zu bytes size and of type %d pts: %llu\n", size, data_type, pts);
     //In this example we know it's a string, print it.
-    printf("Data: %s \n\n", data);
+    printf("Data: %s \n", data);
+    printf("Context: %d \n\n", *(int*)ctx);
 }
 
 void receive_data_callback(uint8_t *data,
@@ -54,8 +56,8 @@ void receive_data_callback(uint8_t *data,
                            uint32_t code,
                            uint8_t stream_id,
                            uint8_t source,
-                           uint8_t flags) {
-
+                           uint8_t flags,
+                           void* ctx) {
     if (first_frame_broken_counter == 0 && broken) {
         printf("The first frame is broken. We know that. Let's not parse it since we don't know the integrity\n");
         first_frame_broken_counter++;
@@ -74,7 +76,8 @@ void receive_data_callback(uint8_t *data,
     printf("mCode: %d\n", code);
     printf("mStreamID: %d\n", stream_id);
     printf("mSource: %d\n", source);
-    printf("mFlags: %d\n\n", flags);
+    printf("mFlags: %d\n", flags);
+    printf("Context: %d\n\n", *(int*)ctx);
 
     int test_failed = 0;
 
@@ -98,9 +101,11 @@ void receive_data_callback(uint8_t *data,
 int main() {
     printf("EFP Version %d.%d \n", efp_get_version() >> 8, efp_get_version() & 0x00ff);
 
+    void* context=(void*)&the_context;
+
     //EFP Send
     printf("Create sender.\n");
-    uint64_t efp_object_handle_send = efp_init_send(TEST_MTU, &send_data_callback);
+    uint64_t efp_object_handle_send = efp_init_send(TEST_MTU, &send_data_callback, context);
     if (!efp_object_handle_send) {
         printf("Fatal. Failed creating EFP sender");
         return 1;
@@ -109,7 +114,7 @@ int main() {
 
     //EFP Recieve
     printf("Create reciever.\n");
-    efp_object_handle_receive = efp_init_receive(10, 5, &receive_data_callback, &receive_embedded_data_callback);
+    efp_object_handle_receive = efp_init_receive(30, 10, &receive_data_callback, &receive_embedded_data_callback, context, EFP_MODE_THREAD);
     if (!efp_object_handle_receive) {
         printf("Fatal. Failed creating EFP reciever");
         return 1;
@@ -118,14 +123,14 @@ int main() {
 
     //Prepare data
     for (int x = 0; x < TEST_DATA_SIZE; x++) {
-        data[x] = (uint8_t) x;
+        test_data[x] = (uint8_t) x;
     }
 
     printf("\nEmbedd data.\n\n");
-    size_t alloc_size = efp_add_embedded_data(NULL, (uint8_t *) embedd_me, &data[0], strlen(embedd_me) + 1,
+    size_t alloc_size = efp_add_embedded_data(NULL, (uint8_t *) embedd_me, &test_data[0], strlen(embedd_me) + 1,
                                               TEST_DATA_SIZE, 1, 1);
     uint8_t *sendThisData = (uint8_t *) malloc(alloc_size);
-    efp_add_embedded_data(sendThisData, (uint8_t *) embedd_me, &data[0], strlen(embedd_me) + 1, TEST_DATA_SIZE, 1, 1);
+    efp_add_embedded_data(sendThisData, (uint8_t *) embedd_me, &test_data[0], strlen(embedd_me) + 1, TEST_DATA_SIZE, 1, 1);
 
     printf("\nTransmit data.\n\n");
 
@@ -144,7 +149,7 @@ int main() {
     }
 
     //This time we don't drop anything.. We should receive the embedded data and the EFP frame with broken == 0
-    result = efp_send_data(efp_object_handle_send, sendThisData, alloc_size, 10, 100, 100, EFP_CODE('A', 'V', 'C', 'C'),
+    result = efp_send_data(efp_object_handle_send, sendThisData, alloc_size, 10, 200, 200, EFP_CODE('A', 'V', 'C', 'C'),
                            2, 16);
     if (result < 0) {
         printf("Error %d sending\n", result);

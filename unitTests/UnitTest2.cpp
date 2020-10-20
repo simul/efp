@@ -19,7 +19,6 @@ void UnitTest2::sendData(const std::vector<uint8_t> &subPacket) {
 }
 
 void UnitTest2::gotData(ElasticFrameProtocolReceiver::pFramePtr &packet) {
-
     if (packet->mPts != 1001 || packet->mCode != 2) {
         unitTestFailed = true;
         unitTestActive = false;
@@ -63,7 +62,7 @@ bool UnitTest2::startUnitTest() {
     ElasticFrameMessages result;
     std::vector<uint8_t> mydata;
     uint8_t streamID=1;
-    myEFPReciever = new (std::nothrow) ElasticFrameProtocolReceiver(5, 2);
+    myEFPReciever = new (std::nothrow) ElasticFrameProtocolReceiver(50, 20);
     myEFPPacker = new (std::nothrow) ElasticFrameProtocolSender(MTU);
     if (myEFPReciever == nullptr || myEFPPacker == nullptr) {
         if (myEFPReciever) delete myEFPReciever;

@@ -2,7 +2,7 @@
 // Created by Anders Cedronius on 2019-12-05.
 //
 
-//FIXME-- Test is currently only sending the packets.
+//FIXME-- Test is currently only sending the packets. lgtm [cpp/fixme-comment]
 //UnitTest13
 //Test sending 100 000 superframes of size from 500 to 10.000 bytes
 //Reverse the packets to the unpacker and drop the middle packet (packet 3) also deliver the fragments reversed meaning packet 5 last fragment first..
@@ -91,7 +91,7 @@ bool UnitTest13::startUnitTest() {
     ElasticFrameMessages result;
     std::vector<uint8_t> mydata;
     uint8_t streamID=1;
-    myEFPReciever = new (std::nothrow) ElasticFrameProtocolReceiver(5, 2);
+    myEFPReciever = new (std::nothrow) ElasticFrameProtocolReceiver(50, 20);
     myEFPPacker = new (std::nothrow) ElasticFrameProtocolSender(MTU);
     if (myEFPReciever == nullptr || myEFPPacker == nullptr) {
         if (myEFPReciever) delete myEFPReciever;

@@ -1,5 +1,16 @@
 //
-// Created by UnitX on 2020-02-16.
+//
+//   ______  _              _    _        ______
+//  |  ____|| |            | |  (_)      |  ____|
+//  | |__   | |  __ _  ___ | |_  _   ___ | |__  _ __  __ _  _ __ ___    ___
+//  |  __|  | | / _` |/ __|| __|| | / __||  __|| '__|/ _` || '_ ` _ \  / _ \
+//  | |____ | || (_| |\__ \| |_ | || (__ | |   | |  | (_| || | | | | ||  __/
+//  |______||_| \__,_||___/ \__||_| \___||_|   |_|   \__,_||_| |_| |_| \___|
+//                                                                  Protocol
+// UnitX @ Edgeware AB 2020
+//
+// For more information, example usage and plug-ins please see
+// https://github.com/Unit-X/efp
 //
 
 #ifndef EFP_EFP_C_API_ELASTIC_FRAME_PROTOCOL_C_API_H
@@ -11,6 +22,10 @@
 ///Generate the uint32_t 'code' out of 4 characters provided
 #define EFP_CODE(c0, c1, c2, c3) (((c0)<<24) | ((c1)<<16) | ((c2)<<8) | (c3))
 
+///
+#define EFP_MODE_THREAD 1
+#define EFP_MODE_RUN_TO_COMPLETE 2
+
 /**
 * efp_get_version
 *
@@ -18,27 +33,31 @@
 */
 uint16_t efp_get_version();
 
-
 /**
 * efp_init_send
 *
 * @mtu Send MTU
 * @*f Pointer to the send fragment function.
+* @ctx context (may be NULL)
 * @return the object ID created during init to be used when calling the other methods
 */
-uint64_t efp_init_send(uint64_t mtu, void (*f)(const uint8_t*, size_t, uint8_t));
+uint64_t efp_init_send(uint64_t mtu, void (*f)(const uint8_t*, size_t, uint8_t, void*), void* ctx);
 
 /**
 * efp_init_send
 *
 * @bucketTimeout Timout for the bucket in x * 10ms
 * @holTimeout Timout for the hol in x * 10ms
-* @*f Pointer to the got superframe.
+* @*f Pointer to the got superframe callback
+* @*g Pointer to the got embedded data callback
+* @ctx context (may be NULL)
 * @return the object ID created during init to be used when calling the other methods
 */
 uint64_t efp_init_receive(uint32_t bucket_timeout, uint32_t hol_timeout,
-        void (*f)(uint8_t*, size_t, uint8_t, uint8_t, uint64_t, uint64_t, uint32_t, uint8_t, uint8_t, uint8_t),
-        void (*g)(uint8_t*, size_t, uint8_t, uint64_t)
+        void (*f)(uint8_t*, size_t, uint8_t, uint8_t, uint64_t, uint64_t, uint32_t, uint8_t, uint8_t, uint8_t, void*),
+        void (*g)(uint8_t*, size_t, uint8_t, uint64_t, void*),
+        void* ctx,
+        uint32_t mode
         );
 
 /**

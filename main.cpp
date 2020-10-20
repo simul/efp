@@ -18,12 +18,13 @@
 #include "unitTests/UnitTest16.h"
 #include "unitTests/UnitTest17.h"
 #include "unitTests/UnitTest18.h"
+#include "unitTests/UnitTest19.h"
+#include "unitTests/UnitTest20.h"
 #include "unitTests/PerformanceLab.h"
 
 #include <iostream>
 
 int main() {
-
     //PerformanceLab sends/receives a endless stream of packets (Used when profiling the code)
     //PerformanceLab myPerformanceLab;
     //myPerformanceLab.startUnitTest();
@@ -157,15 +158,34 @@ int main() {
         //}
     }
 
+    //Send 100 frames... Stop the sender. Delete the sender. delete the reciever
+    //start a new sender and force the superframe counter to != 0 start the reciever
     UnitTest17 unitTest17;
     if (!unitTest17.startUnitTest()) {
         std::cout << "Unit test 17 failed" << std::endl;
         returnCode = EXIT_FAILURE;
     }
 
+    //Using the optional lambda in the pack and send method
     UnitTest18 unitTest18;
     if (!unitTest18.startUnitTest()) {
         std::cout << "Unit test 18 failed" << std::endl;
+        returnCode = EXIT_FAILURE;
+    }
+
+    //Testing the optional context that can be used in the callbacks
+    UnitTest19 unitTest19;
+    if (!unitTest19.startUnitTest()) {
+        std::cout << "Unit test 19 failed" << std::endl;
+        returnCode = EXIT_FAILURE;
+    }
+
+    //Test basic run to completion
+    //Test sending a packet of MTU-headertyp1+1 > result should be one frame type1 and a frame type 2, MTU+1 at the reciever
+
+    UnitTest20 unitTest20;
+    if (!unitTest20.startUnitTest()) {
+        std::cout << "Unit test 20 failed" << std::endl;
         returnCode = EXIT_FAILURE;
     }
 

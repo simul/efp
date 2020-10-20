@@ -18,7 +18,6 @@ void UnitTest1::sendData(const std::vector<uint8_t> &subPacket) {
 }
 
 void UnitTest1::gotData(ElasticFrameProtocolReceiver::pFramePtr &packet) {
-
 }
 
 bool UnitTest1::waitForCompletion() {
@@ -45,7 +44,7 @@ bool UnitTest1::startUnitTest() {
     ElasticFrameMessages result;
     std::vector<uint8_t> mydata;
     uint8_t streamID=1;
-    myEFPReciever = new (std::nothrow) ElasticFrameProtocolReceiver(5, 2);
+    myEFPReciever = new (std::nothrow) ElasticFrameProtocolReceiver(50, 20);
     myEFPPacker = new (std::nothrow) ElasticFrameProtocolSender(MTU);
     if (myEFPReciever == nullptr || myEFPPacker == nullptr) {
         if (myEFPReciever) delete myEFPReciever;

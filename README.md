@@ -2,7 +2,7 @@
 
 # ElasticFrameProtocol
 
-The ElasticFrameProtocol is acting as a bridge between elementary data and the underlying transport protocol.
+The ElasticFrameProtocol is acting as a bridge between data producers/consumers and the underlying transport protocol.
 
 ```
 ---------------------------------------------------------   /\
@@ -15,21 +15,68 @@ The ElasticFrameProtocol is acting as a bridge between elementary data and the u
 
 ```
 
-The elasticity comes from the protocols ability to adapt to incoming frame size, type, number of concurrent streams and underlying infrastructure. The layer between the transport layer and producers/consumers of the data can be kept thin without driving overhead, complexity and delay. 
+The elasticity comes from the protocols ability to adapt to incoming frame size, type, number of concurrent streams and underlying infrastructure. This layer is kept thin without driving overhead, complexity and delay. 
 
 Please read -> [**ElasticFrameProtocol**](https://edgeware-my.sharepoint.com/:p:/g/personal/anders_cedronius_edgeware_tv/ERnSit7j6udBsZOqkQcMLrQBpKmnfdApG3lehRk4zE-qgQ?e=Ha2VrP) for more information.
 
-## Current build status
+## Notification about version 0.3
 
-![efp_base_macos](https://github.com/Unit-X/efp/workflows/efp_base_macos/badge.svg) **(MacOS build)**
+Version 0.3 adds a run-to-completion mode, see unit test 20 for implementation details.
 
-![efp_base_win](https://github.com/Unit-X/efp/workflows/efp_base_win/badge.svg) **(Windows 10 build)**
+The internal delivery mechanism has changed to absolute relative time-outs instead of counters, this changes the behaviour (to the better) compared to older version of EFP when using EFP over lossy infrastructure.
 
-![efp_base_ubuntu](https://github.com/Unit-X/efp/workflows/efp_base_ubuntu/badge.svg) **(Ubuntu build)**
+Version 0.3 also implements an optional context to be used in all callbacks. Please see Unit test 19 for details.
+
+**This version changes the API for the receiver!!** 
+
+X == milliseconds before timing out non complete frames.
+
+Y == milliseconds before moving the head forward in HOL mode. (set to 0 for disabling HOL)
+
+ElasticFrameProtocolReceiver myEFPReceiver(X, Y, (optional context), (optional set run to completion mode));
+
+
+
+## Current badge status
+
+(Click the badge to get to the underlying information)
+
+**Build**
+
+[![efp_base_macos](https://github.com/Unit-X/efp/workflows/efp_base_macos/badge.svg)](https://github.com/Unit-X/efp/actions?query=workflow%3Aefp_base_macos) **(MacOS build)**
+
+[![efp_base_win](https://github.com/Unit-X/efp/workflows/efp_base_win/badge.svg)](https://github.com/Unit-X/efp/actions?query=workflow%3Aefp_base_win) **(Windows 10 build)**
+
+[![efp_base_ubuntu](https://github.com/Unit-X/efp/workflows/efp_base_ubuntu/badge.svg)](https://github.com/Unit-X/efp/actions?query=workflow%3Aefp_base_ubuntu) **(Ubuntu build)**
+
+**Code quality**
+
+[![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/Unit-X/efp.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Unit-X/efp/context:cpp)
+
+
+[![CodeFactor](https://www.codefactor.io/repository/github/unit-x/efp/badge)](https://www.codefactor.io/repository/github/unit-x/efp)
+
+**Code scanning alerts**
+
+[![CodeQL](https://github.com/Unit-X/efp/workflows/CodeQL/badge.svg?branch=master)](https://github.com/Unit-X/efp/security/code-scanning)
+
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/Unit-X/efp.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Unit-X/efp/alerts/)
+
+[![deepcode](https://www.deepcode.ai/api/gh/badge?key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwbGF0Zm9ybTEiOiJnaCIsIm93bmVyMSI6IlVuaXQtWCIsInJlcG8xIjoiZWZwIiwiaW5jbHVkZUxpbnQiOmZhbHNlLCJhdXRob3JJZCI6MjE5MTYsImlhdCI6MTU5NzkzMzY5MX0.VMWvZfxEBy8Ib23oONlN65tNZUrubUqQt6eUnMIiWrA)](https://www.deepcode.ai/app/gh/Unit-X/efp/_/dashboard?utm_content=gh%2FUnit-X%2Fefp) 
+
+**Tests**
+
+[![unit_tests](https://github.com/Unit-X/efp/workflows/unit_tests/badge.svg?branch=master)](https://github.com/Unit-X/efp/actions?query=workflow%3Aunit_tests) **(Unit tests running on Ubuntu)**
+
+**Issues**
+
+[![Percentage of issues still open](http://isitmaintained.com/badge/open/Unit-X/efp.svg)](http://isitmaintained.com/project/Unit-X/efp "Percentage of issues still open")
+
+[![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/Unit-X/efp.svg)](http://isitmaintained.com/project/Unit-X/efp "Average time to resolve an issue")
 
 ## Installation
 
-Requires cmake version >= **3.10** and **C++14**
+Requires cmake version >= **3.10** and **C++17**
 
 **Release:**
 
@@ -73,27 +120,30 @@ The dynamic EFP library
 
 ## Usage
 
-The EFP class/library can be made a reciever or sender. This is configured during creation as decribed below.
+The EFP class/library can be made a receiver or sender. This is configured during creation as described below.
+
+The unit test
 
 **Sender:**
 
 ```cpp
-// The callback function referenced as 'sendCallback'
-void sendData(const std::vector<uint8_t> &subPacket, uint8_t streamID) {
-// Send the subPacket data 
+// The send fragment callback -> 'sendCallback'
+void sendData(const std::vector<uint8_t> &subPacket, uint8_t lStreamID, (optional context.. see below)) {
+// Send the fragment data 
 // UDP.send(subPacket);
 }
 
-// The data to be sent
-std::vector<uint8_t> myData;
+// The data to be sent using EFP
+std::vector<uint8_t> lData;
 
 // Create your sender passing the MTU of the underlying protocol.
-ElasticFrameProtocolSender myEFPSender(MTU);
+// You may also provide additional callback context please see unit test 19.
+ElasticFrameProtocolSender myEFPSender(MTU, (optional context));
 
 // Register your callback sending the packets
 // The callback will be called on the same thread calling 'packAndSend'
 //optionally also a std::placeholders::_2 if you want the EFP streamID
-myEFPSender.sendCallback = std::bind(&sendData, std::placeholders::_1, std::placeholders::_2);
+myEFPSender.sendCallback = std::bind(&sendData, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3 (optional if context is used));
 
 // Send the data
 // param1 = The data
@@ -103,10 +153,11 @@ myEFPSender.sendCallback = std::bind(&sendData, std::placeholders::_1, std::plac
 // param5 = CODE (if the data type param2 (uint8_t) msb is set then CODE must be used
 // See the header file detailing what CODE should be set to
 // param6 = Stream number (uint8_t) a unique value for that EFP-Stream
-// param7 = FLAGS (used for various signaling in the protocol) 
-myEFPSender.packAndSend(myData, ElasticFrameContent::h264, 0, 0, EFP_CODE('A', 'N', 'X', 'B'), 2, NO_FLAGS);
+// param7 = FLAGS (used for various signalling in the protocol) 
+// param8 = Optional lambda (See unit test 18) 
+myEFPSender.packAndSend(myData, ElasticFrameContent::h264, 0, 0, EFP_CODE('A', 'N', 'X', 'B'), 2, NO_FLAGS, (optional lambda));
 
-//If you got your data as a pointer there is also the method 'packAndSendFromPtr' so you don't need to copy your data into a vector first.
+//If you got your data as a pointer there is also the method 'packAndSendFromPtr' so you don't have to copy your data into a vector first.
 
 
 ```
@@ -126,22 +177,25 @@ myEFPSender.packAndSend(myData, ElasticFrameContent::h264, 0, 0, EFP_CODE('A', '
 // mPts contains the pts value used in the superFrame
 // mDts contains the pts value used in the superFrame
 // mCode contains the code sent (if used)
+// mStreamID is the value passed to the receiveFragment method
 // mStream is the stream number to associate to the data
 // mFlags contains the flags used by the superFrame
-void gotData(ElasticFrameProtocol::pFramePtr &rFrame)
+void gotData(ElasticFrameProtocol::pFramePtr &rFrame, (optional context))
 {
 			// Use the data in your application 
 }
 
 // Create your receiver
 // Passing fragment time out and HOL time out if wanted else set HOL to 0
-ElasticFrameProtocolReceiver myEFPReceiver(5, 2);
+// 50 == 50 ms before timing out not receiving all fragments for a frame
+// 20 == 20 ms before moving the head in HOL mode forward.
+ElasticFrameProtocolReceiver myEFPReceiver(50, 20);
 
 // Register the callback
-myEFPReceiver.receiveCallback = std::bind(&gotData, std::placeholders::_1);
+myEFPReceiver.receiveCallback = std::bind(&gotData, std::placeholders::_1, std::placeholders::_2 (optional));
 
 // Receive a EFP fragment
-myEFPReceiver.receiveFragment(subPacket,0);
+myEFPReceiver.receiveFragment(subPacket, uint8_t number (is the mStreamID for stream separation) );
 
 //If you got your data as a pointer there is also the method 'receiveFragmentFromPtr' so you don't need to copy your data into a vector first.
 
@@ -201,7 +255,7 @@ EFPBond makes it possible for all streams to use multiple underlying transport i
 
 [**EFPSignal**](https://github.com/Unit-X/efpsignal)
 
-EFPSignal adds signaling, content declaration and dynamic/static subscription to EFP-Streams.  
+EFPSignal adds signalling, content declaration and dynamic/static subscription to EFP-Streams.  
 
 ## Contributing
 
@@ -216,7 +270,7 @@ EFPSignal adds signaling, content declaration and dynamic/static subscription to
 
 When working with media workflows, both live and non-live, we use framing protocols such as MP4 and MPEG-TS, often transported over HTTP (TCP). Some of the protocols used for media transport are also tied to a certain underlying transport mechanism (RTMP, HLS, WebRTC…), and some are agnostic to the underlying transport (MP4, MPEG-TS…). The protocols tied to an underlying transport type forces the user to the behavior of that protocol’s properties, for example, TCP when using RTMP. If you use MP4 as framing agnostic to the underlying transport and then transport the data using a protocol where you might lose data and the delivery might be out of order, there is no mechanism to correct for that in the MP4-box domain.  
 
-For those situations, MPEG-TS has traditionally been used and is a common multiplexing standard for media. However, MPEG-TS, was designed in the mid ’90s for the transport of media over ATM networks and was later also heavily used in the serial ASI interface. MPEG-TS solved a lot of transport problems in the 1990’s where simplex transport was common and data integrity looked different. However, MPEG-TS has not changed since then, it does not match modern IP protocols well and it has a high protocol overhead. Some of today’s underlying transport protocols also lose data and there might be out of order delivery of data. MPEG-TS was not built to handle that type of delivery behavior. 
+For those situations, MPEG-TS has traditionally been used and is a common multiplexing standard for media. However, MPEG-TS, was designed in the mid ’90s for the transport of media over ATM networks and was later also heavily used in the serial ASI interface. MPEG-TS solved a lot of transport problems in the 1990’s where simplex transport was common and data integrity looked different. However, MPEG-TS has not changed since then, it does not match modern IP protocols well and it has a high protocol overhead. Some of today’s underlying transport protocols also lose data and there might be out of order delivery of data. MPEG-TS was not built to handle that type of delivery behaviour. 
 
 There has been work done in the MPEG group to modernize media/data framing using MMT (MPEG Media Transport) for better adaption against underlying transport. MMT is currently used in the ATSC 3.0 standard but has not gained popularity in the data center/cloud/internet domain. 
 
@@ -263,4 +317,4 @@ Maintainer: anders.cedronius(at)edgeware.tv
 
 *MIT*
 
-Read *LICENCE.md* for details
+Read *LICENCE* for details

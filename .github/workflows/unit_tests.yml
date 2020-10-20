@@ -1,4 +1,4 @@
-name: efp_base_macos
+name: unit_tests
 
 on:
   push:
@@ -9,11 +9,13 @@ on:
 jobs:
   build:
 
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
     - name: CMake set-up
       run: cmake -DCMAKE_BUILD_TYPE=Release .
-    - name: make
-      run: make
+    - name: Build
+      run: cmake --build . --config Release --target efptests
+    - name: Run tests
+      run: ./efptests
